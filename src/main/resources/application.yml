@@ -1,0 +1,48 @@
+spring:
+    thymeleaf:
+        prefix: classpath:/templates/
+        suffix: .html
+    datasource:
+        driver-class-name: org.mariadb.jdbc.Driver
+        jdbc-url: jdbc:mariadb://localhost:3306/choi
+        username: user1
+        password: 8426
+    main:
+        allow-bean-definition-overriding: true
+    mail:
+        host: smtp.gmail.com
+        port: 587
+        username: nicediaryy@gmail.com
+        password: hzdcyorizslfdoaf
+        properties:
+            mail:
+                smtp:
+                    starttls:
+                        enable: true
+                    auth: true
+    jpa:
+        show-sql: true
+
+
+mybatis:
+    config-location: classpath:/mybatis-config.xml
+    mapper-locations: classpath:**/*Mapper.xml
+
+logging:
+    level:
+        root: INFO
+        com.choi.api: DEBUG
+        org.hibernate.SQL: DEBUG
+        org.hibernate.type.descriptor.sql: TRACE
+    pattern:
+        console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{35} - %msg%n"
+        file: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{35} - %msg%n"
+
+
+jwt:
+    secret: choi1234!@#$
+
+
+
+
+
