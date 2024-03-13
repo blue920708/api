@@ -14,10 +14,9 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-@Entity(name = "TB_GUEST_PAGE")
 @Builder
-public class Page {
-
+@Entity(name = "TB_GUEST_BOARD")
+public class Board {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer seq;
@@ -25,12 +24,16 @@ public class Page {
     private String title;
     @Column(columnDefinition="TEXT")
     private String content;
+    private String eventDate;
+    private String eventTime;
+    private String eventType;
     @CreationTimestamp
     @Column(name = "SYS_CREATION_DATE")
     private LocalDateTime sysCreationDate;
     @UpdateTimestamp
     @Column(name = "SYS_UPDATE_DATE")
     private LocalDateTime sysUpdateDate;
+
     @PrePersist
     protected void onCreate() {
         sysCreationDate = LocalDateTime.now();

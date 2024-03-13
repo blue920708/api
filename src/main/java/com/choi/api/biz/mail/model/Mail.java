@@ -19,7 +19,7 @@ public class Mail {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String seq; // 요청시퀀스
+    private int seq; // 요청시퀀스
     private String email; // 유저아이디
     private String subject; // 제목
     private String content; // 메시지

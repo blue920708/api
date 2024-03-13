@@ -1,6 +1,7 @@
 package com.choi.api.biz.user.controller;
 
 import com.choi.api.biz.mail.model.MailDTO;
+import com.choi.api.core.annotation.UserAuth;
 import com.choi.api.core.model.ApiResponse;
 import com.choi.api.biz.user.model.UserDTO;
 import com.choi.api.biz.user.service.UserService;
@@ -26,6 +27,17 @@ public class UserController {
 
     @PostMapping("/verify-email-code")
     public ApiResponse verifyEmailCode(@RequestBody MailDTO.VerifyCodeReq req) { return userService.verifyEmailCode(req);}
+
+    @PostMapping("/findPwd")
+    public ApiResponse findId(@RequestBody UserDTO.FindPwdReq req) { return userService.findPwd(req);}
+
+    @UserAuth
+    @PostMapping("/chgPwd")
+    public ApiResponse chgPwd(@RequestBody UserDTO.ChgPwdReq req) { return userService.chgPwd(req); }
+
+    @UserAuth
+    @GetMapping("/info")
+    public ApiResponse getUser() { return userService.getUser(); }
 
     @GetMapping("/isLogin")
     public ApiResponse isLogin(){

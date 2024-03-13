@@ -6,12 +6,14 @@ public class MailDTO {
 
     @Getter
     public static class SendMailReq {
+        private String username;
         private String email;
+        private String type;
     }
 
     @Getter
     public static class VerifyCodeReq {
-        private String seq;
+        private int seq;
         private String email;
         private String code;
     }

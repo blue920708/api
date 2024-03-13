@@ -35,7 +35,7 @@ public class PageService {
 
             List<Page> list = pageRepository.findById(userId);
             if(list.size() >= 5){
-                return new ApiResponse(ApiResponse.Status.fail, "이용가능한 페이지 수를 초과하였습니다.");
+                return new ApiResponse(ApiResponse.Status.fail, "이용 가능한 페이지 수를 초과하였습니다.");
             }
 
             Page page = Page.builder()
@@ -111,6 +111,28 @@ public class PageService {
                     .build();
 
             int res = pc.savePage(param);
+            if(res == 0){
+                return new ApiResponse(ApiResponse.Status.fail, "페이지 정보가 존재하지 않습니다.");
+            }
+            return new ApiResponse(ApiResponse.Status.success);
+        } catch (Exception e) {
+            log.debug(this.getClass().getName() + " 디버그 -> 오류 : " + e.getMessage());
+            throw new SystemException("SYSTEM_ERROR");
+        }
+    }
+
+    @Transactional
+    public ApiResponse deletePage(int seq){
+        try {
+            String accessToken = jwtService.getAccessToken();
+            String userId = jwtService.get(accessToken, "userId");
+
+            Page param = Page.builder()
+                    .id(userId)
+                    .seq(seq)
+                    .build();
+
+            int res = pc.deletePage(param);
             if(res == 0){
                 return new ApiResponse(ApiResponse.Status.fail, "페이지 정보가 존재하지 않습니다.");
             }

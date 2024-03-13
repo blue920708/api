@@ -25,7 +25,7 @@ public class MailService {
     @Autowired
     private MailRepository mailRepository;
 
-    public String sendMail(Mail mail) throws Exception {
+    public int sendMail(Mail mail) throws Exception {
         // 인증코드
         String code = createCode();
 

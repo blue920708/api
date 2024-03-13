@@ -22,11 +22,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -60,7 +61,8 @@ public class UserService {
                 return new ApiResponse(ApiResponse.Status.fail, "이미 가입한 이메일입니다.");
             }
 
-                username  = repository.save(User.builder()
+                username  = repository.saveAndFlush(User.builder()
+                        .id(String.valueOf(UUID.randomUUID()))
                         .username(req.getUsername())
                         .password(encoder.encode(req.getPassword()))
                         .email(req.getEmail())
@@ -77,32 +79,39 @@ public class UserService {
     }
 
     public ApiResponse verifyEmail(MailDTO.SendMailReq req){
-
-        User duplChk = repository.findByEmail(req.getEmail());
-        if(!Objects.isNull(duplChk)){
-            return new ApiResponse(ApiResponse.Status.fail, "이미 가입한 이메일입니다.");
+        User chk = null;
+        if(req.getType().equals("emailForJoin")){
+            chk = repository.findByEmail(req.getEmail());
+            if(!Objects.isNull(chk)){
+                return new ApiResponse(ApiResponse.Status.fail, "이미 가입한 이메일입니다.");
+            }
+        } else {
+            chk = repository.findByEmailAndUsername(req.getEmail(), req.getUsername());
+            if(Objects.isNull(chk)){
+                return new ApiResponse(ApiResponse.Status.fail, "가입 정보가 존재하지 않습니다.");
+            }
         }
 
+        String subject = req.getType().equals("emailForJoin") ? "[NiceDiary] 회원가입을 위한 인증메일" :  "[NiceDiary] 아이디/비밀번호 찾기를 위한 인증메일";
         Mail mail = Mail.builder()
                 .email(req.getEmail())
-                .subject("[NiceDiary] 회원가입을 위한 인증메일")
-                .type("emailForJoin")
+                .subject(subject)
+                .type(req.getType())
                 .build();
 
-        String seq = "";
+        int seq = 0;
         try {
             seq = mailService.sendMail(mail);
-            if(!StringUtils.hasLength(seq)){
+            if(seq == 0){
                 throw new BizException("인증 이메일 발송에 실패했습니다. 가입을 다시 진행해주세요.");
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
             log.debug(this.getClass().getName() + " 디버그 -> 오류 : {}", e.getMessage());
-            return new ApiResponseErr(e.getMessage(), "작업 처리중 오류가 발생하였습니다.");
+            throw new SystemException("SYSTEM_ERROR");
         }
 
-        return new ApiResponseData<String>(ApiResponse.Status.success, seq);
+        return new ApiResponseData<Integer>(ApiResponse.Status.success, seq);
     }
 
     public ApiResponse verifyEmailCode(MailDTO.VerifyCodeReq req){
@@ -123,10 +132,97 @@ public class UserService {
         } catch (Exception e) {
             e.printStackTrace();
             log.debug(this.getClass().getName() + " 디버그 -> 오류 : {}", e.getMessage());
-            throw new SystemException(e.getMessage());
+            throw new SystemException("SYSTEM_ERROR");
         }
 
         return new ApiResponse(ApiResponse.Status.success);
+    }
+
+    @Transactional
+    public ApiResponse findPwd(UserDTO.FindPwdReq req){
+        Mail mail = Mail.builder()
+                .email(req.getEmail())
+                .seq(req.getSeq())
+                .code(req.getCode())
+                .build();
+
+        User user = User.builder()
+                .username(req.getUsername())
+                .password(encoder.encode(req.getPassword()))
+                .build();
+
+        String code = "";
+        try {
+            code = mailService.verifyCode(mail);
+            if(!StringUtils.hasLength(code)){
+                return new ApiResponse(ApiResponse.Status.fail, "인증코드가 일치하지 않습니다.");
+            } else if(!req.getCode().equals(code)){
+                return new ApiResponse(ApiResponse.Status.fail, "인증코드가 일치하지 않습니다.");
+            }
+
+            int res = repository.updateByUsername(user);
+            if(res == 0){
+                return new ApiResponse(ApiResponse.Status.fail, "계정 정보가 존재하지 않습니다.");
+            } else {
+                return new ApiResponse(ApiResponse.Status.success);
+            }
+
+        } catch (Exception e) {
+            log.debug(this.getClass().getName() + " 디버그 -> 오류 : {}", e.getMessage());
+            throw new SystemException("SYSTEM_ERROR");
+        }
+    }
+
+    @Transactional
+    public ApiResponse chgPwd(UserDTO.ChgPwdReq req){
+        String accessToken = jwtService.getAccessToken();
+        String userId = jwtService.get(accessToken, "userId");
+
+        Optional<User> user = Optional.ofNullable(repository.findById(userId)
+                .orElseThrow(() -> new BizException("계정 정보가 일치하지 않습니다.")));
+
+        try {
+
+            if (!encoder.matches(req.getPrevPwd(), user.get().getPassword())) {
+                return new ApiResponse(ApiResponse.Status.fail, "이전 비밀번호가 일치하지 않습니다.");
+            }
+
+            User param = User.builder()
+                    .id(userId)
+                    .password(encoder.encode(req.getNewPwd()))
+                    .build();
+            int res = repository.updateByUsernameAndId(param);
+            if(res == 0){
+                return new ApiResponse(ApiResponse.Status.fail, "계정 정보가 존재하지 않습니다.");
+            } else {
+                return new ApiResponse(ApiResponse.Status.success);
+            }
+        } catch (Exception e) {
+            log.debug(this.getClass().getName() + " 디버그 -> 오류 : {}", e.getMessage());
+            throw new SystemException("SYSTEM_ERROR");
+        }
+    }
+
+    public ApiResponse getUser(){
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String accessToken = jwtService.getAccessToken();
+        String userId = jwtService.get(accessToken, "userId");
+
+        try {
+            Optional<User> user = Optional.ofNullable(repository.findById(userId)
+                    .orElseThrow(() -> new UnauthorizedException()));
+
+            UserDTO.GetUserRes res = UserDTO.GetUserRes.builder()
+                    .username(user.get().getUsername())
+                    .email(user.get().getEmail())
+                    .insdate(user.get().getSysCreationDate().format(formatter))
+                    .build();
+
+            return new ApiResponseData(ApiResponse.Status.success, res);
+        } catch (Exception e) {
+            log.debug(this.getClass().getName() + " 디버그 -> 오류 : {}", e.getMessage());
+            throw new SystemException("SYSTEM_ERROR");
+        }
     }
 
     public ApiResponse isLogin(){
@@ -162,7 +258,7 @@ public class UserService {
             throw new BizException(e.getMessage());
         } catch(Exception e) {
             log.debug(this.getClass().getName() + " 디버그 -> {}", e.getMessage());
-            throw new SystemException();
+            throw new SystemException("SYSTEM_ERROR");
         }
 
         return new ApiResponse(ApiResponse.Status.fail, "로그인 정보가 존재하지 않습니다.");

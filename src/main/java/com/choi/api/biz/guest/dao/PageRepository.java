@@ -16,11 +16,7 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
 
     List<Page> findById(String userId);
 
-    @Query(nativeQuery = true, value = "SELECT a.SEQ, a.TITLE, a.CONTENT, a.ID FROM TB_GUEST_PAGE a WHERE a.ID = :#{#page.id} AND a.SEQ = :#{#page.seq}")
+    @Query(nativeQuery = true, value = "SELECT a.SEQ, a.TITLE, a.CONTENT, a.ID, a.SYS_CREATION_DATE, a.SYS_UPDATE_DATE FROM TB_GUEST_PAGE a WHERE a.ID = :#{#page.id} AND a.SEQ = :#{#page.seq}")
     Page selectPageByIdAndSeq(@Param("page") Page page);
-
-    @Modifying
-    @Query(nativeQuery = true, value = "UPDATE TB_GUEST_PAGE a SET a.TITLE = :#{#page.title}, a.CONTENT = :#{#page.content}, a.SYS_UPDATE_DATE = CURRENT_TIMESTAMP WHERE a.ID = :#{#page.id} AND a.SEQ = :#{#page.seq}")
-    int savePage(Page page);
 
 }
