@@ -10,6 +10,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -25,6 +26,8 @@ public class CustomAspect {
 
     @Around("@annotation( com.choi.api.core.annotation.UserAuth)")
     public Object userAuth(ProceedingJoinPoint joinPoint) throws Throwable {
+
+        log.debug("userAuth : " + SecurityContextHolder.getContext().getAuthentication().getName());
 
         String authorizationHeader = RequestUtils.getRequestHeader("Authorization");
         if (StringUtils.isEmpty(authorizationHeader) || !authorizationHeader.startsWith("Bearer ")) {

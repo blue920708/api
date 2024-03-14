@@ -30,4 +30,6 @@ public interface BoardRepository extends JpaRepository<Board, Integer> {
 
     Page<Board> findAllByIdAndTitleContainingOrderBySeqDesc(String id, String title, Pageable pageable);
 
+    int deleteBySeq(int seq);
+
 }

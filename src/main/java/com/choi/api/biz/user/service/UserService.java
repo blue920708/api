@@ -13,6 +13,7 @@ import com.choi.api.biz.user.dao.UserRepository;
 import com.choi.api.biz.user.model.User;
 import com.choi.api.biz.user.model.UserDTO;
 import com.choi.api.biz.user.model.UserToken;
+import com.choi.api.core.redis.service.RedisService;
 import com.choi.api.core.security.service.JwtService;
 import com.choi.api.core.util.RequestUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +41,8 @@ public class UserService {
     private MailService mailService;
     @Autowired
     private JwtService jwtService;
+    @Autowired
+    private RedisService redisService;
     private final BCryptPasswordEncoder encoder;
     private final ObjectMapper objectMapper;
 
@@ -239,21 +242,37 @@ public class UserService {
         return new ApiResponse(ApiResponse.Status.success);
     }
 
-    public ApiResponse refresh(String refresh, String username) {
+    public ApiResponse refresh(UserDTO.RefreshReq req) {
 
         try {
-            User user = repository.findByUsername(username);
-            if(Objects.isNull(user)){
-                throw new BizException("로그인 정보가 존재하지 않습니다.");
+            String username = req.getUsername();
+            String bearerToken = jwtService.getAccessToken();
+            User user = Optional.ofNullable(repository.findByUsername(username))
+                    .orElseThrow(() -> new BizException("로그인 정보가 존재하지 않습니다."));
+
+            // 리프레시 토큰 검증
+            String refreshToken = redisService.getValue(user.getId() + "_refresh");
+            if(!StringUtils.hasLength(refreshToken)){
+                log.debug("refesh 디버그 : refresh 토큰 없음");
+                throw new UnauthorizedException();
+            }
+
+            if(!bearerToken.equals(refreshToken)){
+                log.debug("refesh 디버그 : refresh 토큰 불일치");
+                throw new UnauthorizedException();
             }
 
             // 액세스토큰 재발급
-            UserToken userToken = jwtService.refresh(refresh, user);
+            String renewalToken = jwtService.create(user.getId() + "_access", "userId", user.getId(), 1000 * 60 * 1);
+            UserToken userToken = UserToken.builder()
+                    .accessToken(renewalToken)
+                    .refreshToken(refreshToken)
+                    .username(user.getUsername())
+                    .build();
 
-            // 유저토큰 재생성
-            if(!Objects.isNull(userToken)){
-                return new ApiResponseData<UserToken>(ApiResponse.Status.success, userToken);
-            }
+            log.debug("refresh -> 토큰 재발급 : " + userToken.toString());
+            return new ApiResponseData<UserToken>(ApiResponse.Status.success, userToken);
+
         } catch(BizException e) {
             throw new BizException(e.getMessage());
         } catch(Exception e) {
@@ -261,7 +280,6 @@ public class UserService {
             throw new SystemException("SYSTEM_ERROR");
         }
 
-        return new ApiResponse(ApiResponse.Status.fail, "로그인 정보가 존재하지 않습니다.");
     }
 
 }

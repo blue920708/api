@@ -25,5 +25,7 @@ public class PageDTO {
         private int seq;
         private String title;
         private String content;
+        private String insdate;
+        private String update;
     }
 }

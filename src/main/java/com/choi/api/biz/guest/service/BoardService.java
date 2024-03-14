@@ -98,7 +98,6 @@ public class BoardService {
         String userId = jwtService.get(accessToken, "userId");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         try {
-
             Optional<Board> board = Optional.ofNullable(repository.findByIdAndSeq(userId, seq)
                     .orElseThrow(() -> new BizException("데이터가 존재하지 않습니다.")));
 
@@ -126,9 +125,11 @@ public class BoardService {
         String accessToken = jwtService.getAccessToken();
         String userId = jwtService.get(accessToken, "userId");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
         try {
             Pageable pageable = PageRequest.of(page <= 0 ? 0 : page-1, size, Sort.by(Sort.Direction.DESC, "seq"));
             Page<Board> boardList = repository.findAllByIdAndTitleContainingOrderBySeqDesc(userId, keyword, pageable);
+
             List<BoardDTO.BoardListRes> dataList = boardList.getContent().stream().map(board -> {
                 return BoardDTO.BoardListRes.builder()
                         .seq(board.getSeq())
@@ -153,8 +154,23 @@ public class BoardService {
 
     }
 
-    public ApiResponse deleteBoard(){
-        return null;
+    @Transactional
+    public ApiResponse deleteBoard(int seq){
+        String accessToken = jwtService.getAccessToken();
+        String userId = jwtService.get(accessToken, "userId");
+
+        try {
+            int res = repository.deleteBySeq(seq);
+            if(res != 0){
+                return new ApiResponse(ApiResponse.Status.success);
+            } else {
+                return new ApiResponse(ApiResponse.Status.fail, "데이터가 존재하지 않습니다.");
+            }
+        } catch (Exception e) {
+            log.debug(this.getClass().getName() + " 디버그 -> {}", e.getMessage());
+            throw new SystemException();
+        }
+
     }
 
 }

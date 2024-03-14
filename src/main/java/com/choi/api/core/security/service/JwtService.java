@@ -60,37 +60,4 @@ public class JwtService {
         return expiration.before(new Date());
     }
 
-
-    public UserToken refresh(String refreshToken, User user) throws Exception {
-        Claims claims = Jwts.parser().setSigningKey(secret).parseClaimsJws(refreshToken).getBody();
-        // 리프레시 토큰인지 확인
-        if (!"refresh".equals(claims.getSubject())) {
-            log.debug("JwtUtils 디버그 -> 갱신 토큰 : {} ", refreshToken);
-            log.debug("JwtUtils 디버그 -> 갱신 토큰이 아닙니다");
-            throw new BizException("잘못된 접근입니다. 다시 로그인해주세요.");
-        }
-
-        // 유저네임 일치여부
-        if (user.getId().equals(claims.get("id"))) {
-            log.debug("JwtUtils 디버그 -> 갱신 토큰 : {} ", refreshToken);
-            log.debug("JwtUtils 디버그 -> 사용자 계정 불일치");
-            throw new BizException("잘못된 접근입니다. 다시 로그인해주세요.");
-        }
-
-        // 토큰갱신
-        if (!isTokenExpired(refreshToken)) {
-            Map<String, Object> data = new HashMap<>();
-            data.put("userId", user.getId());
-            String accessToken = create(user.getId(), "id", user.getId(), 1000 * 60 * 5);
-            refreshToken = create(user.getId(), "id", user.getId(), 1000 * 60 * 60 * 30);
-            UserToken userToken = UserToken.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .build();
-
-            log.debug("JwtUtils 디버그 -> 새로운 유저 토큰 : {} ", userToken);
-        }
-
-        return null;
-    }
 }

@@ -41,4 +41,9 @@ public class UserDTO {
         private String insdate;
     }
 
+    @Getter
+    public static class RefreshReq {
+        private String username;
+    }
+
 }

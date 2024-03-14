@@ -35,4 +35,8 @@ public class BoardController {
     @UserAuth
     @GetMapping("/list")
     public ApiResponse getBoardList(@RequestParam String keyword, @RequestParam int page, @RequestParam int size) { return service.getBoardList(keyword, page, size); }
+
+    @UserAuth
+    @DeleteMapping("/{seq}")
+    public ApiResponse deleteBoard(@PathVariable("seq")int seq) { return service.deleteBoard(seq); }
 }

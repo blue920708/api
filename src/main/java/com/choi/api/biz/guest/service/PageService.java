@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.choi.api.biz.guest.dao.PageRepositoryCustom;
+
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,13 +42,13 @@ public class PageService {
 
             Page page = Page.builder()
                     .id((userId))
-                    .title("기본 페이지")
+                    .title("기본 메모장")
                     .content("")
                     .build();
 
-            pageRepository.saveAndFlush(page);
+            int res = pageRepository.saveAndFlush(page).getSeq();
 
-            return new ApiResponseData<List<Page>>(list);
+            return new ApiResponseData<Integer>(res);
         } catch (Exception e) {
             log.debug(this.getClass().getName() + " 디버그 -> 오류 : " + e.getMessage());
             return new ApiResponseErr("SYSTEM_ERROR");
@@ -78,6 +80,7 @@ public class PageService {
         try {
             String accessToken = jwtService.getAccessToken();
             String userId = jwtService.get(accessToken, "userId");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
             Page param = Page.builder()
                     .id(userId)
@@ -89,6 +92,8 @@ public class PageService {
                     .seq(page.getSeq())
                     .title(page.getTitle())
                     .content(page.getContent())
+                    .insdate(page.getSysCreationDate() == null ? null : page.getSysCreationDate().format(formatter))
+                    .update(page.getSysUpdateDate() == null ? null : page.getSysUpdateDate().format(formatter))
                     .build();
             return new ApiResponseData<PageDTO.PageDetailRes>(res);
         } catch (Exception e) {

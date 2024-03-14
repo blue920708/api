@@ -50,8 +50,8 @@ public class UserController {
     }
 
     @PostMapping("/refresh")
-    public ApiResponse refresh(@RequestParam String refresh, @RequestParam String username){
-        return userService.refresh(refresh, username);
+    public ApiResponse refresh(@RequestBody UserDTO.RefreshReq req){
+        return userService.refresh(req);
     }
 
 }
