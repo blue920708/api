@@ -34,7 +34,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
 
         CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
-        String accessToken = jwtService.create(user.getId() + "_access", "userId", user.getId(), 1000 * 60 * 1); // 액세스
+        String accessToken = jwtService.create(user.getId() + "_access", "userId", user.getId(), 1000 * 60 * 30); // 액세스
         String refreshToken = jwtService.create(user.getId() + "_refresh", "userId", user.getId(), 1000 * 60 * 60 * 24); // 리프레시
         UserToken userToken = UserToken.builder()
                 .accessToken(accessToken)

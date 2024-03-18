@@ -82,6 +82,9 @@ public class UserService {
     }
 
     public ApiResponse verifyEmail(MailDTO.SendMailReq req){
+
+        String clientIp = RequestUtils.getIp();
+
         User chk = null;
         if(req.getType().equals("emailForJoin")){
             chk = repository.findByEmail(req.getEmail());
@@ -100,6 +103,7 @@ public class UserService {
                 .email(req.getEmail())
                 .subject(subject)
                 .type(req.getType())
+                .clientIp(clientIp)
                 .build();
 
         int seq = 0;
@@ -109,6 +113,9 @@ public class UserService {
                 throw new BizException("인증 이메일 발송에 실패했습니다. 가입을 다시 진행해주세요.");
             }
 
+        } catch (BizException e) {
+            log.debug(this.getClass().getName() + " 디버그 -> 오류 : {}", e.getMessage());
+            throw e;
         } catch (Exception e) {
             log.debug(this.getClass().getName() + " 디버그 -> 오류 : {}", e.getMessage());
             throw new SystemException("SYSTEM_ERROR");
@@ -263,7 +270,7 @@ public class UserService {
             }
 
             // 액세스토큰 재발급
-            String renewalToken = jwtService.create(user.getId() + "_access", "userId", user.getId(), 1000 * 60 * 1);
+            String renewalToken = jwtService.create(user.getId() + "_access", "userId", user.getId(), 1000 * 60 * 30);
             UserToken userToken = UserToken.builder()
                     .accessToken(renewalToken)
                     .refreshToken(refreshToken)

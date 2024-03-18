@@ -25,4 +25,5 @@ public class Mail {
     private String content; // 메시지
     private String code; // 인증코드
     private String type; // 타입
+    private String clientIp;
 }

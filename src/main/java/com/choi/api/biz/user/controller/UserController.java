@@ -6,6 +6,7 @@ import com.choi.api.core.model.ApiResponse;
 import com.choi.api.biz.user.model.UserDTO;
 import com.choi.api.biz.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

@@ -1,6 +1,8 @@
 package com.choi.api.biz.mail.service;
 
 import com.choi.api.biz.mail.dao.MailRepository;
+import com.choi.api.core.exception.BizException;
+import com.choi.api.core.util.RequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import com.choi.api.biz.mail.model.Mail;
@@ -8,10 +10,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import javax.mail.internet.MimeMessage;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Random;
 
 @Service
@@ -26,6 +31,14 @@ public class MailService {
     private MailRepository mailRepository;
 
     public int sendMail(Mail mail) throws Exception {
+        // 동일 아이피 요청횟수 제한
+        String ip = RequestUtils.getIp();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        int cnt = mailRepository.countByClientIpAndSysCreationDateBefore(ip, LocalDateTime.now().minusMinutes(10).format(formatter));
+        if(cnt >= 5){
+            throw new BizException("제한 시간 내 메일요청 횟수를 초과하였습니다.\n잠시 후 시도바랍니다.");
+        }
+
         // 인증코드
         String code = createCode();
 
@@ -35,7 +48,8 @@ public class MailService {
         mimeMessageHelper.setTo(mail.getEmail()); // 메일 수신자
         mimeMessageHelper.setSubject(mail.getSubject()); // 메일 제목
         mimeMessageHelper.setText(setContext(code, mail.getType()), true); // 메일 본문 내용, HTML 여부
-        //mailSender.send(mimeMessage);
+        mailSender.send(mimeMessage);
+        log.debug("sendMail -> 메일 발송 : " + mail.getEmail());
 
         // DB
         mail.setCode(code);
