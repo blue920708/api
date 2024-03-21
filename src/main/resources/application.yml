@@ -4,7 +4,7 @@ spring:
         suffix: .html
     datasource:
         driver-class-name: org.mariadb.jdbc.Driver
-        jdbc-url: jdbc:mariadb://localhost:3306/choi
+        jdbc-url: jdbc:mariadb://43.203.197.193:3306/choi
         username: user1
         password: 8426
     main:
@@ -29,7 +29,7 @@ spring:
                     descriptor:
                         sql: trace
     redis:
-        host: localhost
+        host: 43.203.197.193
         port: 6379
 
 
