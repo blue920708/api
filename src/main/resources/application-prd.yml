@@ -1,0 +1,17 @@
+spring:
+  config:
+    activate:
+      on-profile: prd
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    jdbc-url: jdbc:mariadb://43.203.228.158:3306/choi
+    username: user1
+    password: 8426
+  redis:
+    host: 43.203.228.158
+    port: 6379
+    password: 8426
+
+app:
+  front-domain: http://www.choi-web.top
+

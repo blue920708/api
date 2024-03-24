@@ -1,0 +1,20 @@
+spring:
+  config:
+    activate:
+      on-profile: loc
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    jdbc-url: jdbc:mariadb://localhost:3306/choi
+    username: user1
+    password: 8426
+  redis:
+    host: localhost
+    port: 6379
+    password: 8426
+
+app:
+  front-domain: http://localhost:3000
+
+
+
+

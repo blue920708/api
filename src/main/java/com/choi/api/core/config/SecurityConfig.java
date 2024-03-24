@@ -3,6 +3,7 @@ package com.choi.api.core.config;
 import com.choi.api.core.security.custom.CustomAuthenticationFailureHandler;
 import com.choi.api.core.security.custom.CustomAuthenticationSuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +30,9 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Value("${app.front-domain}")
+    private String domain;
+
     @Autowired
     private CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
 
@@ -48,7 +52,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
-        config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedOrigin(domain);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
 
