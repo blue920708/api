@@ -13,5 +13,5 @@ spring:
     password: 8426
 
 app:
-  front-domain: http://www.choi-web.top
+  front-domain: https://www.choi-web.top
 
