@@ -8,7 +8,7 @@ spring:
     username: user1
     password: 8426
   redis:
-    host: localhost
+    host: 43.203.228.158
     port: 6379
     password: 8426
 
